@@ -1,0 +1,58 @@
+##SAS Code
+##MAT456 Final Project
+##Kickstarter 4000 best funded projects dataset
+##datasource: kaggle.com
+##data first cleaned and formatted in Excel
+
+##import into SAS
+proc import OUT = dataset DATAFILE='/home/sruttenb1/final_project/kickstarter_data.xlsx'	
+            DBMS = xlsx;
+            SHEET = "Variables_only";
+   getnames = yes;
+run;
+
+##take log transformation of dependent variable to test for better fit
+##original data displayed evidence of non-constant variance and non-normality
+data dataset;
+	set dataset;
+	lnconverted_usd = log(converted_usd);
+
+##create scatterplots of correlation between each pair of variables
+proc sgscatter data = dataset;
+		matrix goal num_backers tier_count title_length	min_tier
+			converted_usd currency_type;
+run;
+
+##run stepwise model selection procedure
+proc reg data = dataset;
+		model converted_usd = goal num_backers tier_count title_length min_tier
+			currency_type / selection = stepwise;
+run;
+
+##stepwise selection procedure produced a model that excludes only 'tier_count'
+##run regression diagnostics on model
+proc reg data = dataset;
+	model converted_usd = goal num_backers tier_count title_length min_tier
+			currency_type / selection = stepwise;
+run;
+
+##run least squares analysis
+PROC GLM DATA = dataset;
+		MODEL converted_usd = goal num_backers tier_count title_length	min_tier
+			currency_type / p;
+RUN;
+
+##run Box-Cox procedure to determine appropriate transformation
+proc transreg data = dataset;
+	model boxcox(converted_usd) = identity(goal num_backers tier_count
+			title_length min_tier currency_type);
+	output predicted;
+run;
+
+##Box-Cox confirms log transformation is correct
+##run again with log transformed independent variable
+proc transreg data = dataset;
+	model boxcox(lnconverted_usd) = identity(goal num_backers tier_count
+			title_length min_tier currency_type);
+	output predicted;
+run;
