@@ -7,4 +7,4 @@ Final project for MAT456 - Applied Regression
 
 dataset source: https://inclass.kaggle.com/socathie/kickstarter-project-statistics
 
-'dataset' contains cleaned and formatted data
+'kickstarter_data.xlsx' contains cleaned and formatted data
