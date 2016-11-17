@@ -1,0 +1,52 @@
+proc import OUT = dataset DATAFILE='/home/sruttenb1/final_project/kickstarter_data.xlsx'	
+            DBMS = xlsx;
+            SHEET = "variables_only";
+   getnames = yes;
+run;
+
+data dataset;
+	set dataset;
+	lnamt_pledged_converted = log(amt_pledged_converted);
+run;
+
+proc means data = dataset;
+	var goal_converted;
+	run;
+	
+
+data dataset;
+	set dataset;
+	sqgoal = (goal_converted - 61041.89)**2;
+run;
+
+proc sgscatter data = dataset;
+		matrix goal_converted sqgoal num_backers tier_count title_length min_tier
+			lnamt_pledged_converted currency_type;
+run;
+
+proc reg data = dataset;
+		model amt_pledged_converted = goal_converted num_backers tier_count title_length min_tier
+			currency_type / selection = stepwise;
+run;
+
+proc reg data = dataset;
+	model lnamt_pledged_converted = goal_converted sqgoal num_backers tier_count title_length min_tier
+			currency_type / selection = stepwise;
+run;
+
+PROC GLM DATA = dataset;
+		MODEL lnamt_pledged_converted = goal_converted num_backers tier_count title_length min_tier
+			currency_type / p;
+RUN;
+
+proc transreg data = dataset;
+	model boxcox(amt_pledged_converted) = identity(goal_converted num_backers tier_count
+			title_length min_tier currency_type);
+	output predicted;
+run;
+
+proc transreg data = dataset;
+	model boxcox(lnamt_pledged_converted) = identity(goal_converted num_backers tier_count
+			title_length min_tier currency_type);
+	output predicted;
+run;
